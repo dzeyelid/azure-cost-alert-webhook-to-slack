@@ -1,0 +1,25 @@
+POST http://localhost:7071/api/azureCostAlertWebhook
+Content-Type: application/json
+
+{
+  "schemaId": "AIP Budget Notification",
+  "data": {
+    "SubscriptionName": "<Subscription name>",
+    "SubscriptionId": "12345678-1234-5678-9012-345678901234",
+    "EnrollmentNumber": "",
+    "DepartmentName": "",
+    "AccountName": "",
+    "BillingAccountId": "",
+    "BillingProfileId": "",
+    "InvoiceSectionId": "",
+    "ResourceGroup": "rg-dev",
+    "SpendingAmount": "170.85",
+    "BudgetStartDate": "2020-07-01",
+    "Budget": "30",
+    "Unit": "JPY",
+    "BudgetCreator": "<Email address of the creator>",
+    "BudgetName": "<Budget name>",
+    "BudgetType": "Cost",
+    "NotificationThresholdAmount": "28.50"
+  }
+}
