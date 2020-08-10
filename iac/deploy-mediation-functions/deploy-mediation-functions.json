@@ -1,0 +1,172 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "identifier": {
+      "type": "string"
+    },
+    "storageAccountsSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Standard_ZRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GZRS",
+        "Standard_RAGZRS"
+      ]
+    },
+    "appServicePlanSkuName": {
+      "type": "string",
+      "defaultValue": "Y1",
+      "allowedValues": [
+        "Y1",
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "P1V2",
+        "P2V2",
+        "P3V2",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "appServicePlanSkuCapacity": {
+      "type": "int",
+      "defaultValue": 0,
+      "minValue": 0
+    },
+    "slackWebhookUrl": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "appServicePlanName": "[naming.create('plan', parameters('identifier'))]",
+    "storageAccountsName": "[concat('st', uniqueString(parameters('identifier')))]",
+    "storageAccountsTier": "[if(startsWith(parameters('storageAccountsSkuName'), 'Standard'), 'Standard', 'Premium')]",
+    "appInsightsName": "[naming.create('appi', parameters('identifier'))]",
+    "functionName": "[naming.create('func', parameters('identifier'))]"
+  },
+  "resources": [
+    {
+      "name": "[variables('storageAccountsName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "location": "[resourceGroup().location]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "[parameters('storageAccountsSkuName')]",
+        "tier": "[variables('storageAccountsTier')]"
+      }
+    },
+    {
+      "name": "[variables('appServicePlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2019-08-01",
+      "kind": "functionapp",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('appServicePlanSkuName')]",
+        "capacity": "[parameters('appServicePlanSkuCapacity')]"
+      },
+      "properties": {
+        "name": "[variables('appServicePlanName')]"
+      }
+    },
+    {
+      "name": "[variables('appInsightsName')]",
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2018-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "name": "[variables('functionName')]",
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2019-08-01",
+      "location": "[resourceGroup().location]",
+      "kind": "functionapp",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountsName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsDashboard",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountsName'), ';AccountKey=', listKeys(variables('storageAccountsName'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountsName'), ';AccountKey=', listKeys(variables('storageAccountsName'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountsName'), ';AccountKey=', listKeys(variables('storageAccountsName'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('functionName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "node"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~12"
+            },
+            {
+              "name": "slackWebhookUrl",
+              "value": "[parameters('slackWebhookUrl')]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {},
+  "functions": [
+    {
+      "namespace": "naming",
+      "members": {
+        "create": {
+          "parameters": [
+            {
+              "name": "prefix",
+              "type": "string"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[concat(parameters('prefix'), '-', parameters('name'))]"
+          }
+        }
+      }
+    }
+  ]
+}
