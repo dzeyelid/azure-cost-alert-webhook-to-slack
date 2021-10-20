@@ -44,10 +44,21 @@ az deployment group create `
 ```
 
 ## How to deploy the mediation functions
-# Deploy
 
 ```bash
 cd functions
 npm build
 func azure functionapp publish func-${MEDIATION_FUNCTIONS_IDENTIFIER}
+```
+
+## How to zip
+
+```bash
+zip -r functions.zip \
+  dist \
+  node_modules \
+  host.json \
+  package.json \
+  proxies.json \
+  **/function.json
 ```
