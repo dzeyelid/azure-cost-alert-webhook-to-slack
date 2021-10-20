@@ -1,0 +1,4 @@
+{
+  "identifier": "slack-mediation-func",
+  "slack_webhook_url": "<Slack webhook url>"
+}

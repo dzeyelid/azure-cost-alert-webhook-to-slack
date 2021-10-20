@@ -1,8 +1,29 @@
 # azure-cost-alert-webhook-to-slack
 
-## How to deploy the mediation functions
+## How to deploy resources
 
+### Using Terraform
+
+```bash
+cd iac/terraform
+
+MEDIATION_FUNCTIONS_IDENTIFIER="slack-mediation-func"
+MEDIATION_FUNCTIONS_SLACK_WEBHOOK_URL="<Slack webhook url>"
+
+cat .auto.tfvars.example.json | jq ".identifier=\"${MEDIATION_FUNCTIONS_IDENTIFIER}\" | .slack_webhook_url=\"${MEDIATION_FUNCTIONS_SLACK_WEBHOOK_URL}\"" > .auto.tfvars.json
+
+terraform init
+terraform plan
+terraform apply
+
+# If you destroy these resources
+terraform destroy
+```
+
+### Using ARM template
 ```ps1
+cd iac/arm-template
+
 $MEDIATION_FUNCTIONS_RESOURCE_GROUP='<Resource group name for function to mediate>'
 $MEDIATION_FUNCTIONS_LOCATION='japaneast'
 $MEDIATION_FUNCTIONS_IDENTIFIER='<String to identify the resources>'
@@ -16,12 +37,17 @@ az deployment group create `
   --confirm-with-what-if `
   --resource-group ${MEDIATION_FUNCTIONS_RESOURCE_GROUP} `
   --name deployMediationFunctions `
-  --template-file ./iac/deploy-mediation-functions/deploy-mediation-functions.json `
+  --template-file ./iac/arm-template/deploy-mediation-functions.json `
   --parameters `
     identifier=${MEDIATION_FUNCTIONS_IDENTIFIER} `
     slackWebhookUrl=${MEDIATION_FUNCTIONS_SLACK_WEBHOOK_URL}
+```
 
+## How to deploy the mediation functions
+# Deploy
+
+```bash
 cd functions
 npm build
-func azure functionapp publish func-${MEDIATION_FUNCITONS_IDENTIFIER}
+func azure functionapp publish func-${MEDIATION_FUNCTIONS_IDENTIFIER}
 ```

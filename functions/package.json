@@ -10,11 +10,11 @@
     "test": "echo \"No tests yet...\""
   },
   "dependencies": {
-    "@types/node": "^14.0.27",
-    "axios": "^0.19.2"
+    "axios": "^0.23.0"
   },
   "devDependencies": {
-    "@azure/functions": "^1.0.2-beta2",
+    "@azure/functions": "^1.2.3",
+    "@types/node": "^16.11.1",
     "typescript": "^3.3.3"
   }
 }
