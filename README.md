@@ -47,13 +47,17 @@ az deployment group create `
 
 ```bash
 cd functions
-npm build
+npm run build
 func azure functionapp publish func-${MEDIATION_FUNCTIONS_IDENTIFIER}
 ```
 
 ## How to zip
 
 ```bash
+cd functions
+npm install
+npm run build
+npm prune --production
 zip -r functions.zip \
   dist \
   node_modules \
